@@ -1,0 +1,29 @@
+name: ESP-IDF Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: espressif/idf:release-v5.4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check architecture contracts
+        run: python tools/check_architecture.py
+      - name: Check formatting
+        run: |
+          find components main -name '*.c' -o -name '*.h' | xargs clang-format --dry-run --Werror
+      - name: Build ESP32-S3 firmware
+        run: |
+          idf.py set-target esp32s3
+          idf.py build
+      - name: Archive binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: digiequine-v3-firmware
+          path: |
+            build/*.bin
+            build/*.elf
+            build/flasher_args.json
